@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <link rel="stylesheet" href="css/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/font-awesome.min.css" />
+    <link rel="stylesheet" href="css/responsive.css" />
+    <link rel="stylesheet" href="css/custom.css" />
+    <title>Bot</title>
+  </head>
+  <body>
+    <header class="navbar-header clearfix">
+      <nav class="navbar navbar-expand-lg fixed-top">
+        <div class="container">
+          <a class="navbar-brand" href="#"
+            ><img src="./img/Group 2(1).png" alt=""
+          /></a>
+
+          <div class="ml-auto right-nav">
+            <ul style="list-style:none;">
+              <li>
+                <a href="index.html" class="btn btn-blue">Back to Home</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+    </header>
+    <div class="jumb-report">
+      <h1>
+        The Report Query <br />
+        <span class="h1-span">Family Planning Stages of Their Live</span>
+      </h1>
+
+      <input type="submit" class="button mt-5" value="View Yikon Products" />
+    </div>
+    <div class="container pt-5">
+      <div class="row">
+        <div class="col-md-12">
+          <h3>
+            Abstract
+          </h3>
+          <p class="paragraph pt-2">
+            <span class="bold"> Motivation: </span>
+
+            With high-throughput DNA sequencing costs dropping <$1000 for human
+            genomes, data storage, retrieval and analysis are the major
+            bottlenecks in biological studies. To address the large-data
+            challenges, we advocate a clean separation between the evidence
+            collection and the inference in variant calling. We define and
+            implement a Genome Query Language (GQL) that allows for the rapid
+            collection of evidence needed for calling variants.
+          </p>
+
+          <p>
+            <span class="bold"> Results:</span> We provide a number of cases to
+            showcase the use of GQL for complex evidence collection, such as the
+            evidence for large structural variations. Specifically, typical GQL
+            queries can be written in 5–10 lines of high-level code and search
+            large datasets (100 GB) in minutes. We also demonstrate its
+            complementarity with other variant calling tools. Popular variant
+            calling tools can achieve one order of magnitude speed-up by using
+            GQL to retrieve evidence. Finally, we show how GQL can be used to
+            query and compare multiple datasets. By separating the evidence and
+            inference for variant calling, it frees all variant detection tools
+            from the data intensive evidence collection and focuses on
+            statistical inference.
+          </p>
+          <h3 class="inner-subtitle mt-5">
+            1 INTRODUCTION
+          </h3>
+          <p class="pt-2">
+            As sequencing costs drop, we envision a scenario where every
+            individual is sequenced, perhaps multiple times in their lifetime.
+            There is already a vast array of genomic information across various
+            large-scale sequencing projects including the 1000 genome project
+            (<a
+              href="#R14"
+              rid="R14"
+              class=" bibr popnode tag_hotlink tag_tooltip"
+              id="__tag_663255310"
+              role="button"
+              aria-expanded="false"
+              aria-haspopup="true"
+              >1000 Genomes Project Consortium <i>et al.,</i> 2010</a
+            >) and the cancer genome atlas (TCGA) (<a
+              href="#R14"
+              rid="R14"
+              class=" bibr popnode tag_hotlink tag_tooltip"
+              id="__tag_663255310"
+              role="button"
+              aria-expanded="false"
+              aria-haspopup="true"
+              >Koboldt <i>et al.</i> 2012</a
+            >). In many of these projects, a re-sequencing strategy is applied
+            in which whole genomes are sequenced redundantly with coverage
+            between 4 and <b>40X</b>. The clone inserts <b>500bp</b> Object name
+            are typically short and are not de novo assembled. Instead, they are
+            mapped back to a standard reference to decipher the genomic
+            variation in the individual relative to the reference. Even with
+            advances in single-molecule sequencing and genomic assembly
+          </p>
+          <p>
+            As an example, we consider the use of paired-end sequencing and
+            mapping (PEM) for identifying structural variation. In PEM, fixed
+            length inserts are selected for sequencing at both ends, and the
+            sequenced sub-reads are mapped to a reference genome. Without
+            variation, the distance and orientation of the mapped reads match
+            the a priori expectation. However, if a region is deleted in the
+            donor relative to the reference, ends of the insert spanning the
+            deleted region will map much further apart than expected. Similarly,
+            the expected orientation of the read alignments for Illumina
+            sequencing is (+,−). A (+,+) orientation is suggestive of an
+            inversion event.
+          </p>
+          <p>
+            A starting point of our work is the observation all tools follow a
+            two-step procedure, implicitly or explicitly, for discovery of
+            variation. The first step—the evidence-step—involves the processing
+            of raw data to fetch (say) the discordant pair-end reads; the second
+            step—the inference-step—involves statistical inference on the
+            evidence to make a variant call. Moreover, the evidence gathering
+            step is similar and is typically the data-intensive part of the
+            procedure.
+          </p>
+          <p>
+            For example, in SNV discovery, the evidence step is the alignment
+            (‘pile-up’) of nucleotides to a specific location, whereas the
+            inference step involves SNV estimation based on alignment quality
+            and other factors. By contrast, for SVs such as large deletions, the
+            evidence might be in the form of (a) length-discordant reads and (b)
+            concordant reads mapping to a region; the inference might involve an
+            analysis of the clustering of the length-discordant reads, and
+            looking for copy-number decline and loss of heterozygosity in
+            concordant reads.
+          </p>
+          <p>
+            In this article, we propose a Genome Query Language (GQL) that
+            allows for the efficient querying of genomic fragment data to
+            uncover evidence for variation in the sampled genomes. Note that our
+            tool does not replace other variant calling tools, but it is
+            complementary to existing efforts. It focuses on the collection of
+            evidence that all inference tools can use to make custom inference.
+            First, by providing a simple interface to extract the required
+            evidence from the raw data stored in the cloud, GQL can free callers
+            from the need to handle large data efficiently. Second, we show how
+            existing tools can be sped up and simplified using GQL, with larger
+            speed-ups possible through a cloud based parallel GQL
+            implementation. Third, analysts can examine and visualize the
+            evidence for each variant, independent of the tool used to identify
+            the variant.
+          </p>
+          <p>
+            Software layers and interfaces for genomics: We also place GQL in
+            the context of other genomics software. It is helpful to think of a
+            layered, hourglass, model for genomic processing. At the bottom is
+            the wide, instrument layer (customized for each instrument) for
+            calling reads. This is followed by mapping/compression layers (the
+            ‘narrow waist’ of the hourglass), and subsequently, multiple
+            application layers. Some of these layers have been standardized.
+            Many instruments now produce sequence data as ‘fastq’ format, which
+            in turn is mapped against a reference genome using alignment tools,
+            such as BWA (<a
+              href="#R14"
+              rid="R14"
+              class=" bibr popnode tag_hotlink tag_tooltip"
+              id="__tag_663255310"
+              role="button"
+              aria-expanded="false"
+              aria-haspopup="true"
+              >Li and Durbin.2010</a
+            >) and MAQ (<a
+              href="#R14"
+              rid="R14"
+              class=" bibr popnode tag_hotlink tag_tooltip"
+              id="__tag_663255310"
+              role="button"
+              aria-expanded="false"
+              aria-haspopup="true"
+              >Li <i>et al.,</i> 2008</a
+            >); further, aligned reads are often represented in the compressed,
+            BAM format (<a
+              href="#R14"
+              rid="R14"
+              class=" bibr popnode tag_hotlink tag_tooltip"
+              id="__tag_663255310"
+              role="button"
+              aria-expanded="false"
+              aria-haspopup="true"
+              >Li <i>et al.</i> 2008</a
+            >) that also allows random access. Recently, more compressed
+            alignment formats have come into vogue including SlimGene (<a
+              href="#R14"
+              rid="R14"
+              class=" bibr popnode tag_hotlink tag_tooltip"
+              id="__tag_663255310"
+              role="button"
+              aria-expanded="false"
+              aria-haspopup="true"
+              >Kozanitis <i>et al.,</i> 2011</a
+            >) CRAM (<a
+              href="#R14"
+              rid="R14"
+              class=" bibr popnode tag_hotlink tag_tooltip"
+              id="__tag_663255310"
+              role="button"
+              aria-expanded="false"
+              aria-haspopup="true"
+              >Hsi-Yang Fritz <i>et al.,</i> 2011</a
+            >) and others(<a
+              href="#R14"
+              rid="R14"
+              class=" bibr popnode tag_hotlink tag_tooltip"
+              id="__tag_663255310"
+              role="button"
+              aria-expanded="false"
+              aria-haspopup="true"
+              >Asnani<i>et al.,</i> 2012; Cox
+              <i
+                >et al., 2012; Popitsch and von Haeseler, 2013; Wan
+                <i>et al.,2012; Yanovsky, 2011</i></i
+              ></a
+            >) as well as compression tools for unmapped reads (<a
+              href="#R14"
+              rid="R14"
+              class=" bibr popnode tag_hotlink tag_tooltip"
+              id="__tag_663255310"
+              role="button"
+              aria-expanded="false"
+              aria-haspopup="true"
+              >Jones <i>et al.,</i> 2012</a
+            >). At the highest level, standards such as VCF (<a
+              href="#R14"
+              rid="R14"
+              class=" bibr popnode tag_hotlink tag_tooltip"
+              id="__tag_663255310"
+              role="button"
+              aria-expanded="false"
+              aria-haspopup="true"
+              >VCF Tools, 2011</a
+            >) describe variants (the output of the inference stage of Fig. 1b).
+          </p>
+          <div class="container bg-dark">
+            <div class="card bg-dark text-white" style="width: 100%;">
+              <img
+                src="./img/query-report.jpg"
+                class="card-img-top"
+                alt="..."
+              />
+              <div class="card-body">
+                <h5 class="card-title">
+                  <small class="sm-muted">
+                    <a href="#">Fig. 1.</a>
+                  </small>
+                </h5>
+                <p class="card-text">
+                  <small class="sm-muted">
+                    Abstraction and layering for genomics. The bottom (physical)
+                    layer is the instrumentation software for parsing raw data
+                    into sequences. Mapping against a known reference is the
+                    first level of abstraction of the data. Compression is used
+                    to reduce the storage requirements. Detection of variation
+                    involves an evidence layer to collect relevant reads, and an
+                    inference layer for statistical analysis. The inference
+                    results in variant calls (typically as VCF files) that can
+                    be used by other applications to make genetic discoveries
+                  </small>
+                </p>
+                <a href="#" class="btn btn-primary">Go somewhere</a>
+              </div>
+            </div>
+          </div>
+          <p class="pt-5">
+            In this context, we propose additional layering. Specifically, we
+            advocate the splitting of the processing below the application layer
+            to support a query into an evidence layer(deterministic, large data
+            movement, standardized) and an inference layer (probabilistic,
+            comparatively smaller data movement, little agreement on
+            techniques).
+          </p>
+          <p>
+            For evidence gathering, the closest tools are samtools (<a
+              href="#R14"
+              rid="R14"
+              class=" bibr popnode tag_hotlink tag_tooltip"
+              id="__tag_663255310"
+              role="button"
+              aria-expanded="false"
+              aria-haspopup="true"
+              >Li <i>et al.,</i> 2009</a
+            >), BAMtools
+            <a
+              href="#R14"
+              rid="R14"
+              class=" bibr popnode tag_hotlink tag_tooltip"
+              id="__tag_663255310"
+              role="button"
+              aria-expanded="false"
+              aria-haspopup="true"
+              >Barnett <i>et al.,</i> (2011)</a
+            >, BEDtools (<a
+              href="#R14"
+              rid="R14"
+              class=" bibr popnode tag_hotlink tag_tooltip"
+              id="__tag_663255310"
+              role="button"
+              aria-expanded="false"
+              aria-haspopup="true"
+              >Dale <i>et al.,</i> 2011; Quinlan and Hall, 2010</a
+            >),BioHDF (<a
+              href="#R14"
+              rid="R14"
+              class=" bibr popnode tag_hotlink tag_tooltip"
+              id="__tag_663255310"
+              role="button"
+              aria-expanded="false"
+              aria-haspopup="true"
+              >Mason <i>et al.,</i> 2010</a
+            >) and GATK (<a
+              href="#R14"
+              rid="R14"
+              class=" bibr popnode tag_hotlink tag_tooltip"
+              id="__tag_663255310"
+              role="button"
+              aria-expanded="false"
+              aria-haspopup="true"
+              >McKenna <i>et al.,</i> 2010</a
+            >. Samtools consists of a toolkit and an API for handling mapped
+            reads; together, they comprise the first attempt to hide the
+            implications of raw data handling by treating datasets uniformly
+            regardless of the instrument source. Samtools also provide quick
+            random access to large files and provide a clean API to
+            programmatically handle alignments. The tool combines index sorted
+            BAM files with a lightweight and extremely efficient binning that
+            clusters reads that map in neighboring locations. Thus, samtools can
+            quickly return a set of reads that overlap with a particular
+            location or create a pileup (i.e. all bases seen in reads that map
+            to any reference locus). BAMtools is a C++ API built to support
+            queries in a JSON format. BEDtools, closely aligned with samtools,
+            allows interval-related queries through a clean unix and a python
+            interface. Although powerful, these tools still require
+            programmer-level expertise to open binary files, assign buffers,
+            read alignments and manipulate various fields.(<a
+              href="#R14"
+              rid="R14"
+              class=" bibr popnode tag_hotlink tag_tooltip"
+              id="__tag_663255310"
+              role="button"
+              aria-expanded="false"
+              aria-haspopup="true"
+              >DePristo <i>et al.,</i> 2011</a
+            >.The support of many of these tools for looking at paired-ends, and
+            consequently for structural variation, is limited, depending (in
+            GATK’s case) on the existence of the optional fields RNEXT and PNEXT
+            of the SAM/BAM alignments (<a
+              href="#R14"
+              rid="R14"
+              class=" bibr popnode tag_hotlink tag_tooltip"
+              id="__tag_663255310"
+              role="button"
+              aria-expanded="false"
+              aria-haspopup="true"
+              >McKenna <i>et al.,</i> 2010</a
+            >.The support of many of these tools for looking at paired-ends, and
+            consequently for structural variation, is limited, depending (in
+            GATK’s case) on the existence of the optional fields RNEXT and PNEXT
+            of the SAM/BAM alignments
+          </p>
+          <p>
+            The single biggest difference between our proposed tool, GQL and
+            others is that GQL has a (SQL-like) declarative syntax in its own
+            language, as opposed to a procedural syntax, designed to help
+            programmers rather than the end user. Declarative languages, such as
+            GQL and SQL, not only raise the level of abstraction of data access
+            but also allow automatic data optimization without programmer
+            intervention. By asking users to specify what data they want as
+            opposed to how they want to retrieve it, we will show that GQL can
+            facilitate automatic optimizations, such as the use of indices and
+            caching; these seem harder to support in other tools without
+            explicit programmer directives. Further, it is feasible to compile
+            GQL queries to a distributed, cloud based, back-end.
+          </p>
+          <p>
+            Finally, GQL queries allow genomes to be browsed for variations of
+            interest, allowing an interactive exploration of the data as we show
+            in our results. Although the UCSC browser also allows genome
+            browsing, it does only by position or string, which we refer to as
+            syntactic genome browsing. By contrast, GQL allows browsing for all
+            regions containing reads that satisfy a specified property (e.g.
+            discrepant reads) and view the results on the UCSC browser. We refer
+            to this as semantic genome browsing and give many examples in The
+            GATK
+            <a
+              href="#R14"
+              rid="R14"
+              class=" bibr popnode tag_hotlink tag_tooltip"
+              id="__tag_663255310"
+              role="button"
+              aria-expanded="false"
+              aria-haspopup="true"
+              >Section 2.</a
+            >
+          </p>
+          <h3 class="inner-subtitle mt-5">
+            1.1 An overview of GQL: language features and implementation
+          </h3>
+          <p>
+            We chose to use an SQL-like syntax to express GQL because SQL is an
+            accepted and popular standard for querying databases. Although our
+            syntax is SQL-like, we need some special operators and relations for
+            genomic queries that do not appear to fit well with existing
+            off-the-shelf Relational Database Management Systems (RDBMS). Thus,
+            we developed our own compiler to process GQL queries and translate
+            them into C++ API calls (<a
+              href="#R14"
+              rid="R14"
+              class=" bibr popnode tag_hotlink tag_tooltip"
+              id="__tag_663255310"
+              role="button"
+              aria-expanded="false"
+              aria-haspopup="true"
+              >Section 4 </a
+            >). Our compiler also allowed us the freedom to heavily optimize our
+            GQL implementation (by several orders of magnitude), which would be
+            harder to do with existing RDBMS.
+          </p>
+          <p>
+            We conceptualize the genomic fragment data as a database with some
+            key relations. The first is a relation called READS that describes
+            the collection of mapped fragment reads and all their properties but
+            does not contain the actual bases or quality scores. For example,
+            for paired-end sequencing, each entry in the READS table will
+            contain information about a read, its mapping location and the
+            location of its paired-end. The reads table is constructed by
+            pre-processing a BAM file through a set of scripts that accompanies
+            the source code that split, index and move the contents of the file
+            to the appropriate directory that GQL can access; it contains fields
+            such as the mapping location, the strand, the read length, the
+            location of the pair-ends. In addition, GQL accepts a freely
+            formatted Text table that can be any table that a user can define.
+            Text table can, for example, be used to describe gene annotations.
+          </p>
+          <p>
+            GQL also accepts interval tables, which have three special fields
+            (chromosome, and begin and end location within the chromosome)
+            demarcating the interval. The user has the option of creating an
+            interval table from any table by marking two of the attributes as
+            begin and end; the chromosome field is updated automatically during
+            the iteration through all chromosomes. The most interesting aspects
+            of GQL semantics lie in allowing interval manipulation. In
+            programming languages terminology, intervals are first-class
+            entities in GQL. The (<a
+              href="#R14"
+              rid="R14"
+              class=" bibr popnode tag_hotlink tag_tooltip"
+              id="__tag_663255310"
+              role="button"
+              aria-expanded="false"
+              aria-haspopup="true"
+              >Supplementary Information </a
+            >).summarizes all GQL tables and the respective attributes of the
+            language.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-container mt-5">
+      <div class="footer-padding">
+        <div class="container">
+          <div class="row">
+            <div class="col-md-2">
+              <img class="footer-img" src="./img/Group 2(1).png" alt="" />
+            </div>
+            <div class="col-md-10">
+              <div class="row">
+                <div class="col-md-3">
+                  <ul class="row-ul">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="about.html">About Us</a></li>
+                    <li>
+                      <a href="reproductive-genetic.html"
+                        >Reproductive Genitic</a
+                      >
+                    </li>
+                  </ul>
+                </div>
+                <div class="col-md-3">
+                  <ul class=" color-grey row-ul">
+                    <li>
+                      <a href="cancer-diagnostic.html">Cancer Diagnostic</a>
+                    </li>
+                    <li>
+                      <a href="research.html">Life Science Research</a>
+                    </li>
+                    <li><a href="report-query.html">The Report Query</a></li>
+                  </ul>
+                </div>
+                <div class="col-md-3">
+                  <ul class=" color-grey row-ul">
+                    <li>
+                      <a href="mailto:contact@Yikoni Genotic.inc"
+                        >Yikoni Genotic.inc</a
+                      >
+                    </li>
+                    <li><a href="#">#196, Bende Street</a></li>
+                    <li><a href="#">Port Harcourt, Nigeria</a></li>
+                  </ul>
+                </div>
+                <div class="col-md-3 ">
+                  <ul class="pl-0 color-grey row-ul">
+                    <li class="text-dark pl-0">
+                      Call: <a href="mailto:contact Us"> 07063264292</a>
+                    </li>
+
+                    <li class="text-dark">
+                      Email:
+                      <a href="mailto:contact@gmail.co"
+                        >tonyenation430@gmail.com</a
+                      >
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+          <footer>
+            <p class="text-center pt-5 p-tag">
+              &copy; 2019 T.NATION
+            </p>
+          </footer>
+        </div>
+      </div>
+    </div>
+    <script src="js/jquery.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+  </body>
+</html>
